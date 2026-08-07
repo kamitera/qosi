@@ -65,6 +65,8 @@ const styles = StyleSheet.create({
   stampBoxText: { fontSize: 6.5, color: NEUTRALS.muted, textAlign: 'center' },
   contactLine: { fontSize: 10, marginBottom: 6, lineHeight: 1.4, color: NEUTRALS.ink },
   ruleThin: { width: 30, height: 2.5, marginBottom: 10 },
+  photo: { width: '100%', height: 120, objectFit: 'cover', borderRadius: 3, marginBottom: 8 },
+  photoCredit: { fontSize: 6.5, color: NEUTRALS.muted, marginBottom: 10 },
 });
 
 const E = React.createElement;
@@ -136,6 +138,10 @@ function TestimonyPanel({ data, template, theme, last }) {
   return E(
     View,
     { style: last ? styles.panelLast : styles.panel },
+    data.photo && data.photo.src ? E(Image, { src: data.photo.src, style: styles.photo }) : null,
+    data.photo && data.photo.source === 'unsplash' && data.photo.photographer
+      ? E(Text, { style: styles.photoCredit }, `Photo: ${data.photo.photographer} / Unsplash`)
+      : null,
     data.heading ? E(Text, { style: accentStyle(theme, styles.heading) }, data.heading) : null,
     data.body ? E(Text, { style: styles.testimonyBody }, `“${data.body}”`) : null
   );

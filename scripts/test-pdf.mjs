@@ -24,6 +24,14 @@ const submissionA = {
   },
 };
 submissionA.testimonyText = buildDraftTestimony(submissionA, questions);
+// A tiny 1x1 PNG stands in for an uploaded/Unsplash photo, just to prove
+// the photo layout renders without a network dependency in this test.
+submissionA.photo = {
+  src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+  source: 'unsplash',
+  photographer: 'Jane Doe',
+  photographerUrl: 'https://unsplash.com/@janedoe',
+};
 
 const submissionB = {
   id: 'sub_test2',

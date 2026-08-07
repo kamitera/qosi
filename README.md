@@ -14,6 +14,10 @@ finished, print-ready PDF comes out the other end.
   built around their answers.
 - **Compiled brochures** — an admin can pick up to 3 members' testimonies
   and combine them into one shared brochure.
+- **Photos** — members can optionally add one photo to their brochure,
+  either uploaded from their own device or found via Unsplash search
+  (Unsplash search needs a one-time setup step — see below; upload always
+  works with no setup).
 - **CMS** — admins edit the survey questions and the brochure's fixed
   text/logo/colors from plain web forms. No code, no drag-and-drop canvas.
 
@@ -88,6 +92,26 @@ That's it — no database to set up, no extra accounts.
 In the Netlify dashboard under **Domain management**, you can point your
 own domain (e.g. `outreach.yourmeeting.org`) at the site, or use the free
 `*.netlify.app` address Netlify gives you.
+
+### Optional: turn on Unsplash photo search
+
+Without this step, members can still add a photo by uploading one from
+their own device — that always works. This step only adds the "Search
+Unsplash" option.
+
+1. Go to [unsplash.com/developers](https://unsplash.com/developers) and
+   create a free account, then click **New Application** (accept their API
+   guidelines). A "Demo" application is fine — it's limited to 50 searches
+   per hour, which is plenty for occasional survey use.
+2. Copy the app's **Access Key**.
+3. In your Netlify site: **Site configuration → Environment variables →
+   Add a variable**. Name it `UNSPLASH_ACCESS_KEY` and paste in the key.
+4. Redeploy the site (**Deploys → Trigger deploy**) so the new variable
+   takes effect.
+
+If you skip this (or haven't redeployed yet), the survey's "Search
+Unsplash" tab just tells members it isn't set up yet and points them to
+the upload option instead — nothing breaks.
 
 ## Using it day to day
 

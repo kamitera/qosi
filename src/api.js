@@ -123,6 +123,7 @@ export async function createSubmission(payload) {
     ranking: payload.ranking || [],
     customItems: payload.customItems || [],
     answers: payload.answers || {},
+    photo: payload.photo || null,
     createdAt: new Date().toISOString(),
     status: 'new',
   };
@@ -243,4 +244,38 @@ export async function generatePdfBlob({ mode, submissionId, brochureId }) {
   }
   const doc = buildBrochureDocument(panels, template);
   return pdf(doc).toBlob();
+}
+
+// Searches Unsplash (server-side proxy, so the API key never reaches the
+// browser). Returns { configured: false } — not an error — if the site
+// admin hasn't set UNSPLASH_ACCESS_KEY yet, or if we're in demo mode
+// (there's no server to hold the key at all). Callers should treat that as
+// "hide/disable Unsplash search," not as a failure.
+export async function searchUnsplash(query) {
+  const ok = await checkBackend();
+  if (!ok) return { configured: false };
+  const res = await fetch(`/.netlify/functions/unsplash-search?q=${encodeURIComponent(query)}`);
+  if (!res.ok) {
+    let message = 'Unsplash search failed.';
+    try {
+      const body = await res.json();
+      if (body.error) message = body.error;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(message);
+  }
+  return res.json();
+}
+
+// Required by Unsplash's API guidelines whenever a photo is actually used
+// (not just shown in search results). Best-effort — never blocks the user.
+export async function trackUnsplashDownload(downloadLocation) {
+  const ok = await checkBackend();
+  if (!ok || !downloadLocation) return;
+  try {
+    await fetch(`/.netlify/functions/unsplash-track?url=${encodeURIComponent(downloadLocation)}`);
+  } catch {
+    /* best-effort only */
+  }
 }

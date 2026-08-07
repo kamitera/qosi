@@ -24,6 +24,7 @@ export function buildPersonalPanels({ submission, questions, template }) {
       kind: 'testimony',
       heading: submission.name ? `In ${possessive(submission.name)} own words` : 'In their own words',
       body: submission.testimonyText || '',
+      photo: submission.photo || null,
     },
     insideRight: {
       kind: 'text',
@@ -77,7 +78,7 @@ export function buildCompiledPanels({ brochure, submissions, template }) {
   slots.forEach((slot, i) => {
     const s = picks[i];
     panels[slot] = s
-      ? { kind: 'testimony', heading: [s.name, s.meeting].filter(Boolean).join(', '), body: s.testimonyText || '' }
+      ? { kind: 'testimony', heading: [s.name, s.meeting].filter(Boolean).join(', '), body: s.testimonyText || '', photo: s.photo || null }
       : { kind: 'text', heading: '', body: '' };
   });
   return panels;

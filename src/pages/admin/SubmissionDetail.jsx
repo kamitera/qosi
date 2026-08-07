@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getSubmission, updateSubmission, deleteSubmission, generatePdfBlob, getQuestions } from '../../api.js';
 import { downloadBlob } from '../../lib/downloadBlob.js';
 import { rankedLabels } from '../../../shared/testimony.js';
+import PhotoPicker from '../../components/PhotoPicker.jsx';
 
 export default function SubmissionDetail() {
   const { id } = useParams();
@@ -30,7 +31,7 @@ export default function SubmissionDetail() {
   async function handleSave() {
     setStatus('saving');
     try {
-      await updateSubmission(id, { name: sub.name, meeting: sub.meeting, testimonyText: sub.testimonyText });
+      await updateSubmission(id, { name: sub.name, meeting: sub.meeting, testimonyText: sub.testimonyText, photo: sub.photo || null });
       setStatus('saved');
       setTimeout(() => setStatus(''), 2000);
     } catch (e) {
@@ -80,6 +81,10 @@ export default function SubmissionDetail() {
           <label>Testimony text (edit before printing)</label>
           <textarea rows={6} value={sub.testimonyText} onChange={(e) => set('testimonyText', e.target.value)} />
           <span className="hint">This is what appears in the center inside panel of their brochure.</span>
+        </div>
+        <div className="field">
+          <label>Photo</label>
+          <PhotoPicker value={sub.photo || null} onChange={(photo) => set('photo', photo)} />
         </div>
         <div className="btn-row">
           <button className="btn" onClick={handleSave} disabled={status === 'saving'}>

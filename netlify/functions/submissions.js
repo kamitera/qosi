@@ -40,6 +40,7 @@ export const handler = async (event, context) => {
         ranking: Array.isArray(body.ranking) ? body.ranking : [],
         customItems: Array.isArray(body.customItems) ? body.customItems : [],
         answers: body.answers && typeof body.answers === 'object' ? body.answers : {},
+        photo: body.photo && typeof body.photo === 'object' ? body.photo : null,
         createdAt: new Date().toISOString(),
         status: 'new',
       };

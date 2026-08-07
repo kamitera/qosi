@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RankingPicker from '../components/RankingPicker.jsx';
+import PhotoPicker from '../components/PhotoPicker.jsx';
 import { getQuestions, createSubmission, isDemoMode } from '../api.js';
 import { DEFAULT_QUESTIONS } from '../../shared/defaultQuestions.js';
 
@@ -19,6 +20,7 @@ export default function SurveyPage() {
   const [customText1, setCustomText1] = useState('');
   const [customText2, setCustomText2] = useState('');
   const [answers, setAnswers] = useState({});
+  const [photo, setPhoto] = useState(null);
 
   useEffect(() => {
     getQuestions()
@@ -36,7 +38,7 @@ export default function SurveyPage() {
   }
 
   const allItems = [...questions.rankingItems, ...customItems];
-  const steps = ['intro', 'rank', 'followup', 'review'];
+  const steps = ['intro', 'rank', 'followup', 'photo', 'review'];
   const stepIndex = step;
   const progressPct = ((stepIndex + 1) / steps.length) * 100;
 
@@ -71,7 +73,7 @@ export default function SurveyPage() {
     setSubmitting(true);
     setError('');
     try {
-      const submission = await createSubmission({ name, meeting, ranking, customItems, answers });
+      const submission = await createSubmission({ name, meeting, ranking, customItems, answers, photo });
       navigate(`/thank-you/${submission.id}`);
     } catch (e) {
       setError(e.message || 'Something went wrong submitting your answers.');
@@ -195,6 +197,24 @@ export default function SurveyPage() {
 
       {step === 3 && (
         <div>
+          <h1>Add a photo</h1>
+          <p>Optional — a photo makes your brochure feel more personal. Use your own, or find one on Unsplash.</p>
+          <div className="card">
+            <PhotoPicker value={photo} onChange={setPhoto} />
+          </div>
+          <div className="btn-row">
+            <button className="btn btn--outline" onClick={() => setStep(2)}>
+              Back
+            </button>
+            <button className="btn" onClick={() => setStep(4)}>
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 4 && (
+        <div>
           <h1>Review your answers</h1>
           <div className="card">
             <p>
@@ -214,10 +234,17 @@ export default function SurveyPage() {
                 </p>
               ) : null
             )}
+            {photo && (
+              <p>
+                <strong>Photo:</strong>
+                <br />
+                <img src={photo.src} alt="" style={{ width: 120, borderRadius: 8, marginTop: 6, display: 'block' }} />
+              </p>
+            )}
           </div>
           {error && <div className="banner banner--error">{error}</div>}
           <div className="btn-row">
-            <button className="btn btn--outline" onClick={() => setStep(2)} disabled={submitting}>
+            <button className="btn btn--outline" onClick={() => setStep(3)} disabled={submitting}>
               Back
             </button>
             <button className="btn" onClick={handleSubmit} disabled={submitting}>
