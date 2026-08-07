@@ -21,7 +21,7 @@ export default function PhotoPicker({ value, onChange }) {
     if (!file) return;
     setError('');
     try {
-      const dataUrl = await resizeImageFile(file, 900);
+      const dataUrl = await resizeImageFile(file, 900, { format: 'jpeg', quality: 0.82 });
       onChange({ src: dataUrl, source: 'upload' });
     } catch (err) {
       setError(err.message);

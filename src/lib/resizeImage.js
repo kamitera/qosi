@@ -1,7 +1,11 @@
-// Downscales an uploaded logo to a sane size before storing it as a data
+// Downscales an uploaded image to a sane size before storing it as a data
 // URL, so a non-technical user can't accidentally upload a 10MB photo and
-// bloat every generated PDF.
-export function resizeImageFile(file, maxDim = 320) {
+// bloat every generated PDF — or, worse, produce a submission payload big
+// enough for Netlify Functions to reject outright (there's a ~6MB request
+// body limit). Defaults to PNG (lossless, keeps transparency — used for
+// logos); pass { format: 'jpeg' } for photos, where JPEG compression keeps
+// the data URL dramatically smaller.
+export function resizeImageFile(file, maxDim = 320, { format = 'png', quality = 0.9 } = {}) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('Could not read that file.'));
@@ -16,8 +20,15 @@ export function resizeImageFile(file, maxDim = 320) {
         canvas.width = w;
         canvas.height = h;
         const ctx = canvas.getContext('2d');
+        if (format === 'jpeg') {
+          // JPEG has no alpha channel — flatten onto white first, or a
+          // transparent PNG source would otherwise turn black.
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, w, h);
+        }
         ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/png'));
+        const mime = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+        resolve(canvas.toDataURL(mime, quality));
       };
       img.src = reader.result;
     };

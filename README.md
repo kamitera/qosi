@@ -80,10 +80,35 @@ sample data.
    enter each admin's email. They'll get an email to set their own
    password — no shared password needed.
 
-5. **Visit your site.** Your public survey is at your site's root URL
+5. **Give the site a storage token and site ID.** Netlify Blobs (what
+   stores the survey config and submissions) is supposed to configure
+   itself automatically, but that doesn't always work in practice — if it
+   doesn't, every page will silently sit in "demo mode" instead of really
+   saving anything. To make it reliable, set it up explicitly once:
+   - Click your avatar (top right) → **User settings** → **Applications**
+     → **Personal access tokens** → **New access token**. Set expiration
+     to **No expiration** (a short-lived token would make storage quietly
+     break again once it expires). Name it something like "Blobs storage"
+     and generate it — copy the token (you won't be able to see it
+     again).
+   - Find your site's ID: **Site configuration → General → Site details**
+     — look for **Site ID** (a long string like
+     `1a2b3c4d-5e6f-...`), and copy it.
+   - Back in **Site configuration → Environment variables → Add a
+     variable**, add two variables:
+     - `NETLIFY_BLOBS_TOKEN` — the token you generated.
+     - `NETLIFY_BLOBS_SITE_ID` — the Site ID you copied.
+   - **Deploys → Trigger deploy** to pick both up.
+   - Note the token grants broad account access (not just Blobs) — treat
+     it like a password, and you can revoke/regenerate it anytime from
+     **User settings → Applications**.
+
+6. **Visit your site.** Your public survey is at your site's root URL
    (e.g. `https://your-meeting.netlify.app/`) — that's the link to share
    with members. The admin area is at `/admin` — invited admins log in
-   there.
+   there. If the "Demo mode" banner is still showing after step 5, the
+   site isn't actually saving data yet — see "Storage isn't working"
+   below.
 
 That's it — no database to set up, no extra accounts.
 
@@ -168,3 +193,22 @@ can try the entire app before deploying anything — but it also means demo
 mode data doesn't carry over between browsers/devices, and admin sign-in
 is skipped entirely in that mode. Once deployed to Netlify with Identity
 turned on, real sign-in is required for every admin action.
+
+## Troubleshooting: "Demo mode" banner on the live site
+
+If your *deployed* site (not localhost) still shows the "Demo mode" banner,
+the backend functions aren't actually saving data — everything (including
+Unsplash search, which only works server-side) will silently misbehave.
+This almost always means step 5 above (the storage token) hasn't been done
+yet, or the site hasn't redeployed since. To confirm, open your site and
+check what a function actually returns:
+
+```
+https://your-site.netlify.app/.netlify/functions/questions
+```
+
+If that shows real JSON (starting with `{"introTitle":...`), storage is
+working. If it shows an error mentioning `MissingBlobsEnvironmentError`,
+go do step 5 — both `NETLIFY_BLOBS_TOKEN` and `NETLIFY_BLOBS_SITE_ID` need
+to be set (missing either one falls back to the same broken
+auto-detection), then redeploy.
