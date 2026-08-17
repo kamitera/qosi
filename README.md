@@ -146,7 +146,9 @@ the upload option instead — nothing breaks.
   the follow-up questions.
 - **Brochure Template** — set your meeting's name, logo, color theme
   (pick from 5 preset swatches — no hex codes to type), contact info, and
-  the fixed text that surrounds each testimony.
+  the heading/body text for each of the brochure's 6 panels. Every panel
+  can also have its own optional image (a "Choose File" button, same as
+  the logo) — no design software needed.
 - **Submissions** — see everyone who's taken the survey, lightly edit
   their testimony text before it's printed, and download their brochure.
 - **Compile Brochure** — pick up to 3 submissions and build one shared

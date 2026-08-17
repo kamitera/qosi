@@ -50,12 +50,11 @@ const styles = StyleSheet.create({
   small: { fontSize: 9.5, lineHeight: 1.7, color: NEUTRALS.ink },
   logo: { width: 42, height: 42, marginBottom: 10, objectFit: 'contain' },
   tagline: { fontSize: 10, fontStyle: 'italic', marginTop: 8, color: NEUTRALS.ink },
+  backCoverTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
   stampBox: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
     width: 58,
     height: 44,
+    flexShrink: 0,
     borderWidth: 0.75,
     borderColor: NEUTRALS.muted,
     borderStyle: 'solid',
@@ -88,6 +87,13 @@ function Rule(theme) {
   return E(View, { style: { ...styles.ruleThin, backgroundColor: theme.primary } });
 }
 
+// The admin's per-panel accent image (distinct from a member's own
+// testimony photo, though rendered the same visual way).
+function PanelImage(data) {
+  if (!data.image) return null;
+  return E(Image, { src: data.image, style: styles.photo });
+}
+
 function FrontCoverPanel({ data, template, theme, last }) {
   return E(
     View,
@@ -95,6 +101,7 @@ function FrontCoverPanel({ data, template, theme, last }) {
     Logo(template),
     E(Text, { style: styles.orgName }, data.orgName),
     Rule(theme),
+    PanelImage(data),
     E(Text, { style: accentStyle(theme, styles.title) }, data.title),
     data.topValue ? E(Text, { style: accentStyle(theme, styles.topValue) }, data.topValue) : null,
     E(Text, { style: styles.byline }, data.byline)
@@ -105,6 +112,7 @@ function TextPanel({ data, template, theme, last }) {
   return E(
     View,
     { style: last ? styles.panelLast : styles.panel },
+    PanelImage(data),
     data.heading ? E(Text, { style: accentStyle(theme, styles.heading) }, data.heading) : null,
     data.body ? E(Text, { style: styles.body }, data.body) : null,
     Array.isArray(data.ranking) && data.ranking.length
@@ -151,7 +159,8 @@ function ContactPanel({ data, template, theme, last }) {
   return E(
     View,
     { style: tintPanelStyle(last ? styles.panelLast : styles.panel, theme) },
-    E(Text, { style: accentStyle(theme, styles.heading) }, 'Visit Us'),
+    PanelImage(data),
+    E(Text, { style: accentStyle(theme, styles.heading) }, data.heading || 'Visit Us'),
     data.address ? E(Text, { style: styles.contactLine }, data.address) : null,
     data.website ? E(Text, { style: styles.contactLine }, data.website) : null,
     data.email ? E(Text, { style: styles.contactLine }, data.email) : null,
@@ -163,9 +172,18 @@ function BackCoverPanel({ data, template, theme, last }) {
   return E(
     View,
     { style: tintPanelStyle(last ? styles.panelLast : styles.panel, theme) },
-    E(View, { style: styles.stampBox }, E(Text, { style: styles.stampBoxText }, 'place\nstamp\nhere')),
-    Logo(template),
-    E(Text, { style: styles.orgName }, data.orgName),
+    // Logo/org name and the mailing "place stamp here" box share a row so
+    // the box can't collide with whatever content flows below it (e.g. an
+    // admin-added panel image) — it used to be absolutely positioned,
+    // which broke as soon as this panel could contain more than a couple
+    // of short lines of text.
+    E(
+      View,
+      { style: styles.backCoverTopRow },
+      E(View, {}, Logo(template), E(Text, { style: styles.orgName }, data.orgName)),
+      E(View, { style: styles.stampBox }, E(Text, { style: styles.stampBoxText }, 'place\nstamp\nhere'))
+    ),
+    PanelImage(data),
     data.blurb ? E(Text, { style: { ...styles.body, marginTop: 8 } }, data.blurb) : null,
     data.tagline ? E(Text, { style: accentStyle(theme, styles.tagline) }, data.tagline) : null
   );

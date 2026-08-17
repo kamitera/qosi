@@ -9,7 +9,20 @@ import { buildDraftTestimony } from '../shared/testimony.js';
 import { buildPersonalPanels, buildCompiledPanels } from '../shared/panelContent.js';
 import { buildBrochureDocument } from '../shared/brochureDocument.js';
 
-const template = DEFAULT_TEMPLATE;
+// A tiny solid-color PNG, reused as a stand-in "admin panel image" so this
+// test can prove the new per-panel image feature renders, with no network
+// dependency. (Distinct color per panel would be nicer, but one fixture
+// image is enough to confirm placement/sizing doesn't break.)
+const TEST_IMG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+
+const template = {
+  ...DEFAULT_TEMPLATE,
+  frontImage: TEST_IMG,
+  insideLeftImage: TEST_IMG,
+  insideRightImage: TEST_IMG,
+  backFlapImage: TEST_IMG,
+  backImage: TEST_IMG,
+};
 const questions = DEFAULT_QUESTIONS;
 
 const submissionA = {

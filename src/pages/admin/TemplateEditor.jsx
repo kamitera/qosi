@@ -3,6 +3,41 @@ import { getTemplate, saveTemplate } from '../../api.js';
 import { resizeImageFile } from '../../lib/resizeImage.js';
 import { COLOR_THEMES } from '../../../shared/colorThemes.js';
 
+// Reusable "optional panel image" control — used on every panel below so
+// each one can carry its own accent image, not just text.
+function PanelImageField({ template, field, onChange }) {
+  const [error, setError] = useState('');
+  const value = template[field];
+
+  async function handleUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError('');
+    try {
+      const dataUrl = await resizeImageFile(file, 900, { format: 'jpeg', quality: 0.82 });
+      onChange(field, dataUrl);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  return (
+    <div className="field">
+      <label>Panel image (optional)</label>
+      {value && <img src={value} alt="" className="logo-preview" style={{ width: 100, height: 70, objectFit: 'cover', marginBottom: 10 }} />}
+      <input type="file" accept="image/*" onChange={handleUpload} />
+      {error && <span className="hint" style={{ color: '#b6543c' }}>{error}</span>}
+      {value && (
+        <div style={{ marginTop: 8 }}>
+          <button type="button" className="btn btn--outline btn--small" onClick={() => onChange(field, '')}>
+            Remove image
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function TemplateEditor() {
   const [t, setT] = useState(null);
   const [status, setStatus] = useState('');
@@ -44,7 +79,10 @@ export default function TemplateEditor() {
   return (
     <div>
       <h1>Brochure Template</h1>
-      <p>This is the fixed text, logo, and color scheme that appears on every brochure.</p>
+      <p>
+        This is the fixed text, images, and color scheme for each of the brochure's 6 panels. Each panel can have
+        its own optional image plus its own heading and body text.
+      </p>
 
       <div className="card">
         <h3>Identity</h3>
@@ -92,15 +130,16 @@ export default function TemplateEditor() {
       </div>
 
       <div className="card">
-        <h3>Front cover</h3>
+        <h3>Panel 1 — Front cover</h3>
         <div className="field">
           <label>Title</label>
           <input type="text" value={t.frontCoverTitle} onChange={(e) => set('frontCoverTitle', e.target.value)} />
         </div>
+        <PanelImageField template={t} field="frontImage" onChange={set} />
       </div>
 
       <div className="card">
-        <h3>Inside — left panel</h3>
+        <h3>Panel 2 — Inside left</h3>
         <div className="field">
           <label>Heading</label>
           <input type="text" value={t.insideLeftHeading} onChange={(e) => set('insideLeftHeading', e.target.value)} />
@@ -109,10 +148,20 @@ export default function TemplateEditor() {
           <label>Body text</label>
           <textarea value={t.insideLeftBody} onChange={(e) => set('insideLeftBody', e.target.value)} />
         </div>
+        <PanelImageField template={t} field="insideLeftImage" onChange={set} />
       </div>
 
       <div className="card">
-        <h3>Inside — right panel</h3>
+        <h3>Panel 3 — Inside center (testimony)</h3>
+        <p className="hint">
+          This panel's heading and text come from each member's own answers — there's nothing to set here. The
+          image below is only used as a fallback when a member didn't add their own photo.
+        </p>
+        <PanelImageField template={t} field="insideCenterImage" onChange={set} />
+      </div>
+
+      <div className="card">
+        <h3>Panel 4 — Inside right</h3>
         <div className="field">
           <label>Heading</label>
           <input type="text" value={t.insideRightHeading} onChange={(e) => set('insideRightHeading', e.target.value)} />
@@ -130,10 +179,15 @@ export default function TemplateEditor() {
           />
           <span className="hint">One line per item.</span>
         </div>
+        <PanelImageField template={t} field="insideRightImage" onChange={set} />
       </div>
 
       <div className="card">
-        <h3>Contact (back flap)</h3>
+        <h3>Panel 5 — Back flap (contact)</h3>
+        <div className="field">
+          <label>Heading</label>
+          <input type="text" value={t.backFlapHeading} onChange={(e) => set('backFlapHeading', e.target.value)} />
+        </div>
         <div className="field">
           <label>Address</label>
           <input type="text" value={t.address} onChange={(e) => set('address', e.target.value)} />
@@ -150,14 +204,16 @@ export default function TemplateEditor() {
           <label>Phone</label>
           <input type="text" value={t.contactPhone} onChange={(e) => set('contactPhone', e.target.value)} />
         </div>
+        <PanelImageField template={t} field="backFlapImage" onChange={set} />
       </div>
 
       <div className="card">
-        <h3>Back cover</h3>
+        <h3>Panel 6 — Back cover</h3>
         <div className="field">
           <label>Blurb</label>
           <textarea value={t.backCoverBlurb} onChange={(e) => set('backCoverBlurb', e.target.value)} />
         </div>
+        <PanelImageField template={t} field="backImage" onChange={set} />
       </div>
 
       <div className="card">
