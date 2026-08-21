@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, NavLink, Navigate } from 'react-router-dom';
-import { getCurrentUser, openLogin, logout, onAuthChange } from '../../identity.js';
+import { loginAdmin, logoutAdmin, isAdminLoggedIn } from '../../adminAuth.js';
 import { ensureBackendChecked, isDemoMode } from '../../api.js';
 import Dashboard from './Dashboard.jsx';
 import QuestionsEditor from './QuestionsEditor.jsx';
@@ -9,13 +9,59 @@ import Submissions from './Submissions.jsx';
 import SubmissionDetail from './SubmissionDetail.jsx';
 import CompileBrochure from './CompileBrochure.jsx';
 
+function LoginScreen({ onLoggedIn }) {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      await loginAdmin(password);
+      onLoggedIn();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="page">
+      <h1>Admin sign-in</h1>
+      <p>Enter the admin password to edit the survey, brochure, and review submissions.</p>
+      <form className="card" onSubmit={handleSubmit} style={{ maxWidth: 360 }}>
+        <div className="field">
+          <label htmlFor="admin-password">Password</label>
+          <input
+            id="admin-password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoFocus
+          />
+        </div>
+        {error && <div className="banner banner--error">{error}</div>}
+        <button className="btn" type="submit" disabled={busy || !password}>
+          {busy ? 'Checking…' : 'Log In'}
+        </button>
+      </form>
+      <p className="hint" style={{ marginTop: 20, color: '#777' }}>
+        This site's admin password isn't set up yet? See the README's "Set an admin password" step — it's a
+        `ADMIN_PASSWORD` environment variable in Netlify.
+      </p>
+    </div>
+  );
+}
+
 export default function AdminApp() {
-  const [user, setUser] = useState(getCurrentUser());
+  const [loggedIn, setLoggedIn] = useState(isAdminLoggedIn());
   const [checkedBackend, setCheckedBackend] = useState(false);
   const [demo, setDemo] = useState(false);
 
   useEffect(() => {
-    onAuthChange(() => setUser(getCurrentUser()));
     ensureBackendChecked().then((d) => {
       setDemo(d);
       setCheckedBackend(true);
@@ -30,22 +76,15 @@ export default function AdminApp() {
     );
   }
 
-  const signedIn = demo || !!user;
+  const signedIn = demo || loggedIn;
 
   if (!signedIn) {
-    return (
-      <div className="page">
-        <h1>Admin sign-in</h1>
-        <p>Sign in with your invited admin account to edit the survey, brochure, and review submissions.</p>
-        <button className="btn" onClick={openLogin}>
-          Log In
-        </button>
-        <p className="hint" style={{ marginTop: 20, color: '#777' }}>
-          Not seeing a login box? This site's Netlify Identity may not be enabled yet — see the README's
-          "Turn on Identity" step.
-        </p>
-      </div>
-    );
+    return <LoginScreen onLoggedIn={() => setLoggedIn(true)} />;
+  }
+
+  function handleLogout() {
+    logoutAdmin();
+    setLoggedIn(false);
   }
 
   return (
@@ -65,8 +104,8 @@ export default function AdminApp() {
           {demo ? (
             <span className="badge">Demo mode</span>
           ) : (
-            <button className="btn btn--outline btn--small" onClick={logout}>
-              {user?.user_metadata?.full_name || user?.email} — Log Out
+            <button className="btn btn--outline btn--small" onClick={handleLogout}>
+              Log Out
             </button>
           )}
         </div>
@@ -75,7 +114,7 @@ export default function AdminApp() {
         {demo && (
           <div className="banner no-print">
             Demo mode — no backend connected, so admin sign-in is skipped and everything here saves to this
-            browser only. Deploy to Netlify and turn on Identity to require real admin logins.
+            browser only.
           </div>
         )}
         <Routes>

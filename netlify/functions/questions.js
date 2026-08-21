@@ -13,7 +13,7 @@ export const handler = async (event, context) => {
     }
 
     if (event.httpMethod === 'PUT') {
-      requireAdmin(context);
+      requireAdmin(event);
       const body = JSON.parse(event.body || '{}');
       await store.setJSON('questions', body);
       return jsonResponse(200, body);

@@ -13,7 +13,7 @@ import { makeId } from '../../shared/id.js';
 export const handler = async (event, context) => {
   const store = brochuresStore();
   try {
-    requireAdmin(context);
+    requireAdmin(event);
 
     if (event.httpMethod === 'GET') {
       const id = event.queryStringParameters && event.queryStringParameters.id;

@@ -30,7 +30,8 @@ database, WordPress, or any other service.
 - The website itself (React, built with Vite).
 - A handful of small serverless functions (`netlify/functions/`) that save
   and load data, and generate the PDF.
-- **Netlify Identity** — invite-only login for admins.
+- **A simple admin password** — one shared password gates `/admin` (see
+  "Admin login" below for why this isn't Netlify Identity).
 - **Netlify Blobs** — built-in storage for the survey config, brochure
   template, and submissions.
 
@@ -71,16 +72,17 @@ sample data.
    from `netlify.toml` automatically (`npm run build`, publish `dist`,
    functions in `netlify/functions`). Click deploy.
 
-3. **Turn on Identity** (this is what lets multiple named admins log in).
-   In the Netlify site dashboard: **Site configuration → Identity → Enable
-   Identity**. Under **Registration**, set it to **Invite only** (so
-   strangers can't sign themselves up as admins).
+3. **Set an admin password.** In **Site configuration → Environment
+   variables → Add a variable**, add two:
+   - `ADMIN_PASSWORD` — whatever password admins should use to log into
+     `/admin`. Everyone who needs admin access uses this same password
+     (see "Admin login" below for why it's not individual named accounts).
+   - `ADMIN_SESSION_SECRET` — any long random string (e.g. mash the
+     keyboard for 40+ characters). This isn't a password anyone types —
+     it's used internally to sign login sessions so they can't be forged.
+     Nobody needs to remember it.
 
-4. **Invite your admins.** Still under Identity, click **Invite users** and
-   enter each admin's email. They'll get an email to set their own
-   password — no shared password needed.
-
-5. **Give the site a storage token and site ID.** Netlify Blobs (what
+4. **Give the site a storage token and site ID.** Netlify Blobs (what
    stores the survey config and submissions) is supposed to configure
    itself automatically, but that doesn't always work in practice — if it
    doesn't, every page will silently sit in "demo mode" instead of really
@@ -103,11 +105,12 @@ sample data.
      it like a password, and you can revoke/regenerate it anytime from
      **User settings → Applications**.
 
-6. **Visit your site.** Your public survey is at your site's root URL
+5. **Visit your site.** Your public survey is at your site's root URL
    (e.g. `https://your-meeting.netlify.app/`) — that's the link to share
-   with members. The admin area is at `/admin` — invited admins log in
-   there. If the "Demo mode" banner is still showing after step 5, the
-   site isn't actually saving data yet — see "Storage isn't working"
+   with members. The admin area is at `/admin` — log in with the
+   `ADMIN_PASSWORD` you set in step 3. If the "Demo mode" banner is still
+   showing after step 4, the site isn't actually saving data yet — see
+   "Storage isn't working"
    below.
 
 That's it — no database to set up, no extra accounts.
@@ -180,9 +183,13 @@ shared/                    Code shared between the browser and the server
 netlify/functions/         The serverless backend
   questions.js / template.js / submissions.js / brochures.js
   generate-pdf.js            Renders the PDF server-side
+  admin-login.js             Checks ADMIN_PASSWORD, issues a session token
+  _session.js                 Signs/verifies that session token
 src/                       The React app (survey + admin CMS)
   api.js                     Talks to the backend, or falls back to demo mode
+  adminAuth.js                Admin login/logout, session token storage
 scripts/test-pdf.mjs       Local sanity check for the PDF layout
+scripts/test-session.mjs   Local sanity check for the admin session tokens
 ```
 
 ## Notes on the "demo mode" fallback
@@ -193,15 +200,30 @@ transparently stores data in `localStorage` and generates PDFs right in
 the browser using the same layout code the server uses. This is why you
 can try the entire app before deploying anything — but it also means demo
 mode data doesn't carry over between browsers/devices, and admin sign-in
-is skipped entirely in that mode. Once deployed to Netlify with Identity
-turned on, real sign-in is required for every admin action.
+is skipped entirely in that mode. Once deployed to Netlify with
+`ADMIN_PASSWORD` set, real sign-in is required for every admin action.
+
+## Admin login: why a shared password instead of named accounts
+
+This app originally used **Netlify Identity** for real per-person named
+admin logins. Netlify has since moved Identity behind a paid plan (it's no
+longer available on the free tier), so this now uses a much simpler
+scheme instead: one shared password (`ADMIN_PASSWORD`), checked by a
+small serverless function, that issues a signed 30-day login session — see
+`netlify/functions/_session.js` and `admin-login.js`. Good enough to gate
+who can edit the survey/brochure; not meant to be bank-grade (there's one
+password for everyone, and no login-attempt rate limiting). If you want
+real named-per-person accounts and audit logs later, that would mean
+either upgrading to a paid Netlify plan for Identity, or wiring in a
+proper auth provider (e.g. Supabase Auth's free tier) — worth revisiting
+if this tool grows beyond a handful of trusted admins.
 
 ## Troubleshooting: "Demo mode" banner on the live site
 
 If your *deployed* site (not localhost) still shows the "Demo mode" banner,
 the backend functions aren't actually saving data — everything (including
 Unsplash search, which only works server-side) will silently misbehave.
-This almost always means step 5 above (the storage token) hasn't been done
+This almost always means step 4 above (the storage token) hasn't been done
 yet, or the site hasn't redeployed since. To confirm, open your site and
 check what a function actually returns:
 
@@ -211,6 +233,16 @@ https://your-site.netlify.app/.netlify/functions/questions
 
 If that shows real JSON (starting with `{"introTitle":...`), storage is
 working. If it shows an error mentioning `MissingBlobsEnvironmentError`,
-go do step 5 — both `NETLIFY_BLOBS_TOKEN` and `NETLIFY_BLOBS_SITE_ID` need
+go do step 4 — both `NETLIFY_BLOBS_TOKEN` and `NETLIFY_BLOBS_SITE_ID` need
 to be set (missing either one falls back to the same broken
 auto-detection), then redeploy.
+
+## Troubleshooting: can't log into `/admin`
+
+- **"Incorrect password"** — double-check `ADMIN_PASSWORD` in Netlify's
+  environment variables matches what you're typing (it's case-sensitive).
+- **A generic/server error on login** — most likely `ADMIN_SESSION_SECRET`
+  isn't set. Both `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` need to be
+  set for login to work at all.
+- Changed either variable? **Deploys → Trigger deploy** to pick it up —
+  environment variable changes don't apply until the next deploy.

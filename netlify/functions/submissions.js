@@ -21,7 +21,7 @@ export const handler = async (event, context) => {
         if (!sub) return jsonResponse(404, { error: 'Submission not found.' });
         return jsonResponse(200, sub);
       }
-      requireAdmin(context);
+      requireAdmin(event);
       const { blobs } = await store.list();
       const all = await Promise.all(blobs.map((b) => store.get(b.key, { type: 'json' })));
       all.sort((a, b) => (b && a ? (b.createdAt || '').localeCompare(a.createdAt || '') : 0));
@@ -51,7 +51,7 @@ export const handler = async (event, context) => {
     }
 
     if (event.httpMethod === 'PUT') {
-      requireAdmin(context);
+      requireAdmin(event);
       const id = event.queryStringParameters && event.queryStringParameters.id;
       if (!id) return jsonResponse(400, { error: 'Missing id.' });
       const existing = await store.get(id, { type: 'json' });
@@ -63,7 +63,7 @@ export const handler = async (event, context) => {
     }
 
     if (event.httpMethod === 'DELETE') {
-      requireAdmin(context);
+      requireAdmin(event);
       const id = event.queryStringParameters && event.queryStringParameters.id;
       if (!id) return jsonResponse(400, { error: 'Missing id.' });
       await store.delete(id);

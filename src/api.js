@@ -5,7 +5,7 @@
 // testimony drafting, panel layout, PDF rendering) as the real server
 // functions. That means you can try the whole app — survey, admin, PDF
 // download — before ever touching Netlify.
-import { getAuthToken } from './identity.js';
+import { getAdminToken } from './adminAuth.js';
 import { DEFAULT_QUESTIONS } from '../shared/defaultQuestions.js';
 import { DEFAULT_TEMPLATE } from '../shared/defaultTemplate.js';
 import { buildDraftTestimony } from '../shared/testimony.js';
@@ -45,7 +45,7 @@ export async function ensureBackendChecked() {
 }
 
 async function realFetch(path, options = {}) {
-  const token = getAuthToken();
+  const token = getAdminToken();
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
   if (token) headers.Authorization = `Bearer ${token}`;
   const res = await fetch(`/.netlify/functions/${path}`, { ...options, headers });
@@ -203,7 +203,7 @@ export async function deleteBrochure(id) {
 export async function generatePdfBlob({ mode, submissionId, brochureId }) {
   const ok = await checkBackend();
   if (ok) {
-    const token = getAuthToken();
+    const token = getAdminToken();
     const headers = { 'Content-Type': 'application/json' };
     if (token) headers.Authorization = `Bearer ${token}`;
     const res = await fetch('/.netlify/functions/generate-pdf', {

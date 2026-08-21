@@ -29,7 +29,7 @@ export const handler = async (event, context) => {
       panels = buildPersonalPanels({ submission, questions, template });
       filename = `testimony-${(submission.name || 'brochure').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.pdf`;
     } else if (body.mode === 'compiled') {
-      requireAdmin(context);
+      requireAdmin(event);
       if (!body.brochureId) return jsonResponse(400, { error: 'Missing brochureId.' });
       const brochure = await brochuresStore().get(body.brochureId, { type: 'json' });
       if (!brochure) return jsonResponse(404, { error: 'Brochure not found.' });
